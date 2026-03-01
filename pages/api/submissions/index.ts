@@ -29,6 +29,7 @@ export default async function handler(
       id: submission.id,
       content: submission.content,
       submittedAt: submission.submitted_at.toISOString(),
+      version: submission.version ?? undefined,
     });
   }
 
@@ -37,7 +38,10 @@ export default async function handler(
     if (!content) {
       return res.status(400).json({ error: 'content required' });
     }
-    const row = await createSubmission(sessionId, content);
+    const version = process.env.APP_VERSION ?? (req.body?.version as string) ?? null;
+    const prolificId = (req.body?.prolific_id as string) || null;
+    const originUrl = (req.body?.origin_url as string) || null;
+    const row = await createSubmission(sessionId, content, version, prolificId, originUrl);
     if (!row) return res.status(500).json({ error: 'Failed to save submission' });
     return res.status(200).json({
       id: row.id,

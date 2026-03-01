@@ -31,7 +31,10 @@ export default async function handler(
 
   if (req.method === 'POST') {
     const title = (req.body?.title as string) || 'New chat';
-    const conv = await createConversation(sessionId, title);
+    const version = process.env.APP_VERSION ?? (req.body?.version as string) ?? null;
+    const prolificId = (req.body?.prolific_id as string) || null;
+    const originUrl = (req.body?.origin_url as string) || null;
+    const conv = await createConversation(sessionId, title, version, prolificId, originUrl);
     if (!conv) return res.status(500).json({ error: 'Failed to create conversation' });
     return res.status(200).json({
       id: conv.id,

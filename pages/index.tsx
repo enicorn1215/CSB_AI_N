@@ -34,9 +34,7 @@ To start, you will provide one initial idea to get the participant started: ${AI
 
 Strict behavioral rules:
 
-Provide exactly ONE idea per response unless explicitly asked for more.
-
-Do not add commentary, explanations about creativity, or discussion about the task.
+Provide exactly ONE idea per response only when requested by the user.
 
 Do not summarize prior ideas unless explicitly requested.
 
@@ -153,6 +151,15 @@ export default function Home() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const loadedServerConvIds = useRef<Set<string>>(new Set());
   const initialGreetingDone = useRef(false);
+  const prolificIdRef = useRef<string | null>(null);
+
+  // Read PROLIFIC_PID from URL once on load (Prolific redirects with ?PROLIFIC_PID=...)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const pid = params.get('PROLIFIC_PID') || null;
+    prolificIdRef.current = pid;
+  }, []);
 
   const selected = conversations.find((c) => c.id === selectedId);
   const showCollabTips = Boolean(
@@ -254,7 +261,12 @@ export default function Home() {
       fetch('/api/conversations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId, title: 'Chat' }),
+        body: JSON.stringify({
+          session_id: sessionId,
+          title: 'Chat',
+          prolific_id: prolificIdRef.current ?? undefined,
+          origin_url: typeof window !== 'undefined' ? window.location.origin : undefined,
+        }),
       })
         .then((res) => res.ok ? res.json() : Promise.reject(new Error('Failed to create')))
         .then(async (data: { id: string; title?: string; createdAt?: string }) => {
@@ -344,6 +356,8 @@ export default function Home() {
             body: JSON.stringify({
               session_id: sessionId,
               title: text.slice(0, 40) + (text.length > 40 ? '…' : ''),
+              prolific_id: prolificIdRef.current ?? undefined,
+              origin_url: typeof window !== 'undefined' ? window.location.origin : undefined,
             }),
           });
           const createData = await createRes.json();
@@ -544,7 +558,12 @@ export default function Home() {
       const res = await fetch('/api/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId, content }),
+        body: JSON.stringify({
+          session_id: sessionId,
+          content,
+          prolific_id: prolificIdRef.current ?? undefined,
+          origin_url: typeof window !== 'undefined' ? window.location.origin : undefined,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
