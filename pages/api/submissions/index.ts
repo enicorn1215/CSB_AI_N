@@ -11,6 +11,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const sessionId = (req.query.session_id as string) || (req.body?.session_id as string);
+  const prolificId = (req.query.prolific_id as string) || (req.body?.prolific_id as string) || null;
   if (!sessionId || typeof sessionId !== 'string') {
     return res.status(400).json({ error: 'session_id required' });
   }
@@ -22,7 +23,7 @@ export default async function handler(
   await initDb();
 
   if (req.method === 'GET') {
-    const submission = await getSubmissionBySession(sessionId);
+    const submission = await getSubmissionBySession(sessionId, prolificId);
     if (!submission) return res.status(200).json({ submitted: false });
     return res.status(200).json({
       submitted: true,

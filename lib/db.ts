@@ -44,8 +44,10 @@ export async function initDb(): Promise<void> {
       origin_url TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_conversations_session ON conversations(session_id);
+    CREATE INDEX IF NOT EXISTS idx_conversations_prolific ON conversations(prolific_id);
     CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
     CREATE INDEX IF NOT EXISTS idx_submissions_session ON submissions(session_id);
+    CREATE INDEX IF NOT EXISTS idx_submissions_prolific ON submissions(prolific_id);
   `);
   // Add version column to existing DBs (ignore if already present)
   try {
@@ -78,17 +80,30 @@ export async function initDb(): Promise<void> {
   } catch (e: unknown) {
     if ((e as { code?: string })?.code !== '42701') throw e;
   }
+  try {
+    await p.query('CREATE INDEX IF NOT EXISTS idx_conversations_prolific ON conversations(prolific_id)');
+  } catch (_) {}
+  try {
+    await p.query('CREATE INDEX IF NOT EXISTS idx_submissions_prolific ON submissions(prolific_id)');
+  } catch (_) {}
 }
 
 export type DbConversation = { id: string; title: string; created_at: Date; version?: string | null };
 export type DbMessage = { role: string; content: string; timestamp: Date };
 
-export async function listConversations(sessionId: string): Promise<DbConversation[]> {
+/** List conversations by participant: by prolific_id when provided, else by session_id. */
+export async function listConversations(
+  sessionId: string,
+  prolificId?: string | null
+): Promise<DbConversation[]> {
   const p = getPool();
   if (!p) return [];
+  const byProlific = prolificId && prolificId.trim() !== '';
   const r = await p.query<DbConversation & { version?: string | null }>(
-    'SELECT id, title, created_at, version FROM conversations WHERE session_id = $1 ORDER BY created_at DESC',
-    [sessionId]
+    byProlific
+      ? 'SELECT id, title, created_at, version FROM conversations WHERE prolific_id = $1 ORDER BY created_at DESC'
+      : 'SELECT id, title, created_at, version FROM conversations WHERE session_id = $1 ORDER BY created_at DESC',
+    [byProlific ? prolificId!.trim() : sessionId]
   );
   return r.rows.map((row) => ({
     id: row.id,
@@ -115,15 +130,20 @@ export async function createConversation(
   return r.rows[0];
 }
 
+/** Get one conversation by id, scoped by participant: prolific_id when provided, else session_id. */
 export async function getConversation(
   conversationId: string,
-  sessionId: string
+  sessionId: string,
+  prolificId?: string | null
 ): Promise<{ id: string; title: string; created_at: Date; messages: DbMessage[] } | null> {
   const p = getPool();
   if (!p) return null;
+  const byProlific = prolificId && prolificId.trim() !== '';
   const conv = await p.query<{ id: string; title: string; created_at: Date }>(
-    'SELECT id, title, created_at FROM conversations WHERE id = $1 AND session_id = $2',
-    [conversationId, sessionId]
+    byProlific
+      ? 'SELECT id, title, created_at FROM conversations WHERE id = $1 AND prolific_id = $2'
+      : 'SELECT id, title, created_at FROM conversations WHERE id = $1 AND session_id = $2',
+    [conversationId, byProlific ? prolificId!.trim() : sessionId]
   );
   if (conv.rows.length === 0) return null;
   const msgs = await p.query<DbMessage>(
@@ -136,16 +156,21 @@ export async function getConversation(
   };
 }
 
+/** Append messages; conversation ownership by prolific_id when provided, else session_id. */
 export async function appendMessages(
   conversationId: string,
   sessionId: string,
-  messages: { role: string; content: string; timestamp: string }[]
+  messages: { role: string; content: string; timestamp: string }[],
+  prolificId?: string | null
 ): Promise<boolean> {
   const p = getPool();
   if (!p) return false;
+  const byProlific = prolificId && prolificId.trim() !== '';
   const check = await p.query(
-    'SELECT 1 FROM conversations WHERE id = $1 AND session_id = $2',
-    [conversationId, sessionId]
+    byProlific
+      ? 'SELECT 1 FROM conversations WHERE id = $1 AND prolific_id = $2'
+      : 'SELECT 1 FROM conversations WHERE id = $1 AND session_id = $2',
+    [conversationId, byProlific ? prolificId!.trim() : sessionId]
   );
   if (check.rows.length === 0) return false;
   for (const m of messages) {
@@ -157,16 +182,21 @@ export async function appendMessages(
   return true;
 }
 
+/** Update title; conversation ownership by prolific_id when provided, else session_id. */
 export async function updateConversationTitle(
   conversationId: string,
   sessionId: string,
-  title: string
+  title: string,
+  prolificId?: string | null
 ): Promise<boolean> {
   const p = getPool();
   if (!p) return false;
+  const byProlific = prolificId && prolificId.trim() !== '';
   const r = await p.query(
-    'UPDATE conversations SET title = $1 WHERE id = $2 AND session_id = $3',
-    [title, conversationId, sessionId]
+    byProlific
+      ? 'UPDATE conversations SET title = $1 WHERE id = $2 AND prolific_id = $3'
+      : 'UPDATE conversations SET title = $1 WHERE id = $2 AND session_id = $3',
+    [title, conversationId, byProlific ? prolificId!.trim() : sessionId]
   );
   return (r.rowCount ?? 0) > 0;
 }
@@ -192,14 +222,19 @@ export async function createSubmission(
   return r.rows[0];
 }
 
+/** Get latest submission by participant: by prolific_id when provided, else by session_id. */
 export async function getSubmissionBySession(
-  sessionId: string
+  sessionId: string,
+  prolificId?: string | null
 ): Promise<{ id: string; content: string; submitted_at: Date; version: string | null } | null> {
   const p = getPool();
   if (!p) return null;
+  const byProlific = prolificId && prolificId.trim() !== '';
   const r = await p.query<{ id: string; content: string; submitted_at: Date; version: string | null }>(
-    'SELECT id, content, submitted_at, version FROM submissions WHERE session_id = $1 ORDER BY submitted_at DESC LIMIT 1',
-    [sessionId]
+    byProlific
+      ? 'SELECT id, content, submitted_at, version FROM submissions WHERE prolific_id = $1 ORDER BY submitted_at DESC LIMIT 1'
+      : 'SELECT id, content, submitted_at, version FROM submissions WHERE session_id = $1 ORDER BY submitted_at DESC LIMIT 1',
+    [byProlific ? prolificId!.trim() : sessionId]
   );
   if (r.rows.length === 0) return null;
   return r.rows[0];

@@ -187,7 +187,8 @@ export default function Home() {
     const stored = loadSubmission();
     setIdeas(parseStoredIdeas(stored));
     const sessionId = getSessionId();
-    fetch(`/api/submissions?session_id=${encodeURIComponent(sessionId)}`)
+    const prolificQ = prolificIdRef.current ? `&prolific_id=${encodeURIComponent(prolificIdRef.current)}` : '';
+    fetch(`/api/submissions?session_id=${encodeURIComponent(sessionId)}${prolificQ}`)
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data: { submitted: boolean; content?: string }) => {
         if (data.submitted && typeof data.content === 'string') {
@@ -222,7 +223,8 @@ export default function Home() {
     const savedSelected = typeof window !== 'undefined' ? localStorage.getItem(SELECTED_KEY) : null;
 
     const sessionId = getSessionId();
-    fetch(`/api/conversations?session_id=${encodeURIComponent(sessionId)}`)
+    const prolificQ = prolificIdRef.current ? `&prolific_id=${encodeURIComponent(prolificIdRef.current)}` : '';
+    fetch(`/api/conversations?session_id=${encodeURIComponent(sessionId)}${prolificQ}`)
       .then((res) => {
         if (res.ok) return res.json();
         throw new Error('Server storage not available');
@@ -279,7 +281,11 @@ export default function Home() {
           const saveRes = await fetch(`/api/conversations/${conv.id}/messages`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ session_id: sessionId, messages: [greetingMessage] }),
+            body: JSON.stringify({
+              session_id: sessionId,
+              messages: [greetingMessage],
+              ...(prolificIdRef.current ? { prolific_id: prolificIdRef.current } : {}),
+            }),
           });
           if (!saveRes.ok) throw new Error('Failed to save greeting');
           setConversations([conv]);
@@ -318,7 +324,8 @@ export default function Home() {
     if (loadedServerConvIds.current.has(selectedId)) return;
     loadedServerConvIds.current.add(selectedId);
     const sessionId = getSessionId();
-    fetch(`/api/conversations/${encodeURIComponent(selectedId)}?session_id=${encodeURIComponent(sessionId)}`)
+    const prolificQ = prolificIdRef.current ? `&prolific_id=${encodeURIComponent(prolificIdRef.current)}` : '';
+    fetch(`/api/conversations/${encodeURIComponent(selectedId)}?session_id=${encodeURIComponent(sessionId)}${prolificQ}`)
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error('Failed to load'))))
       .then((data: Conversation) => {
         setConversations((prev) =>
@@ -504,6 +511,7 @@ export default function Home() {
             session_id: sessionId,
             messages: messagesToSave,
             ...(newTitle ? { title: newTitle } : {}),
+            ...(prolificIdRef.current ? { prolific_id: prolificIdRef.current } : {}),
           }),
         });
       }

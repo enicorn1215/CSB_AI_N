@@ -11,6 +11,7 @@ export default async function handler(
 
   const id = req.query.id as string;
   const sessionId = req.query.session_id as string;
+  const prolificId = (req.query.prolific_id as string) || null;
   if (!id || !sessionId) {
     return res.status(400).json({ error: 'id and session_id required' });
   }
@@ -20,7 +21,7 @@ export default async function handler(
   }
 
   await initDb();
-  const conv = await getConversation(id, sessionId);
+  const conv = await getConversation(id, sessionId, prolificId);
   if (!conv) {
     return res.status(404).json({ error: 'Conversation not found' });
   }

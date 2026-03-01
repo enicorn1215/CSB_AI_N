@@ -10,10 +10,11 @@ export default async function handler(
   }
 
   const id = req.query.id as string;
-  const { session_id: sessionId, messages: bodyMessages, title } = req.body as {
+  const { session_id: sessionId, messages: bodyMessages, title, prolific_id: prolificId } = req.body as {
     session_id?: string;
     messages?: { role: string; content: string; timestamp: string }[];
     title?: string;
+    prolific_id?: string;
   };
 
   if (!id || !sessionId) {
@@ -27,11 +28,11 @@ export default async function handler(
   await initDb();
 
   if (title !== undefined && typeof title === 'string') {
-    await updateConversationTitle(id, sessionId, title);
+    await updateConversationTitle(id, sessionId, title, prolificId ?? null);
   }
 
   if (Array.isArray(bodyMessages) && bodyMessages.length > 0) {
-    const ok = await appendMessages(id, sessionId, bodyMessages);
+    const ok = await appendMessages(id, sessionId, bodyMessages, prolificId ?? null);
     if (!ok) return res.status(404).json({ error: 'Conversation not found' });
   }
 
