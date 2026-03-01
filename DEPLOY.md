@@ -21,8 +21,8 @@ git init
 git add .
 git commit -m "Deploy CSB_0_VersionB ideation app"
 
-# Point at your GitHub repo and push (replace YOUR_USERNAME with your GitHub username)
-git remote add origin https://github.com/YOUR_USERNAME/CSB_AI_D.git
+# Point at your GitHub repo and push
+git remote add origin https://github.com/enicorn1215/CSB_AI_D.git
 git branch -M main
 git push -u origin main
 ```
