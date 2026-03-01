@@ -30,7 +30,7 @@ const AI_GREETING =
   'Hi, let’s collaborate on this. I’ll begin with one possible idea: Wind-Down Alarm and Keeping the Phone Outside the Bedroom.'; 
 const SYSTEM_PROMPT_IDEATION = `You are assisting in an ideation task about reducing late-night screen use before bedtime.
 To start, you will provide one initial idea to get the participant started: ${AI_GREETING}. You must follow the strict behavioral rules below.
-1.	Provide exactly ONE idea per response.
+1.	If requested by the user, provide exactly ONE idea per response.
 •	Do not introduce multiple alternatives in a single response.
 •	Do not bundle variations of the same idea.
 2.	Do not summarize prior ideas unless the user explicitly asks for a summary.
@@ -58,7 +58,6 @@ const SYSTEM_INTERVENTION = `• When interacting with the AI, use your own cont
 3. You may also borrow a strategy from another area of life, such as exercise routines, gaming rewards, or budgeting habits, and adapt it to bedtime screen use.`;
 
 const NUM_SUBMISSION_IDEAS = 1;
-const COLLAB_TIPS = SYSTEM_INTERVENTION;
 /** Set to your Qualtrics (or other) survey URL to redirect after submission. Leave empty for no redirect. */
 const POST_SUBMISSION_REDIRECT_URL = 'https://qualtrics.ou.edu/jfe/form/SV_cSDC9tsl0TJxfNk';
 
@@ -160,16 +159,6 @@ export default function Home() {
   }, []);
 
   const selected = conversations.find((c) => c.id === selectedId);
-  const showCollabTips = Boolean(
-    selected &&
-      (selected.messages ?? []).some(
-        (m) =>
-          m.role === 'assistant' &&
-          !m.isIntervention &&
-          m.content !== SYSTEM_INTERVENTION &&
-          m.content.trim().length > 0
-      )
-  );
 
   // Load proceeded state from sessionStorage
   useEffect(() => {
@@ -723,12 +712,6 @@ export default function Home() {
       <div className={`layout ${theme}`}>
         {/* Chat with AI */}
         <main className="panel main-panel">
-          {showCollabTips && (
-            <div className="collab-tips-block collab-tips-pop">
-              <div className="collab-tips-label">💡 Collaboration Tips</div>
-              <div className="collab-tips-content">{COLLAB_TIPS}</div>
-            </div>
-          )}
           <div className="messages" role="log">
             {(selected?.messages ?? [])
               .filter((m) => !m.isIntervention && m.content !== SYSTEM_INTERVENTION)
