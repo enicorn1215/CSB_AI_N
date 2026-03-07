@@ -28,35 +28,33 @@ const TASK_DESCRIPTION =
   'In this task, you will collaborate with an AI assistant to brainstorm ideas for reducing food waste at home. Through interaction with an AI assistant, you can develop, refine, and adjust ideas together. Your goal is to generate a final idea that are both creative and practical.';
 const AI_GREETING =
   'Hi, let’s collaborate on this. I’ll begin with one possible idea: Weekly Meal Planning Routine: Before grocery shopping each week, households create a short meal plan based on ingredients they already have at home.'; 
-const SYSTEM_PROMPT_IDEATION = `You are assisting in an ideation task about reducing food waste at home.
-To start, you will provide one initial idea to get the participant started: ${AI_GREETING}. You must follow the strict behavioral rules below.
-1.	If requested by the user, provide exactly ONE idea per response.
-•	Do not introduce multiple alternatives in a single response.
-•	Do not bundle variations of the same idea.
-2.	Do not summarize prior ideas unless the user explicitly asks for a summary.
-3.	Maintain a neutral and professional tone at all times.
-4.	Do not end responses with open-ended questions or conversational prompts.
-•	Do not ask follow-up questions.
-•	Do not invite exploration.
-5.	Do not provide meta-instructions about how the user should think or collaborate.
-•	Do not suggest brainstorming strategies.
-•	Do not recommend adding constraints, perspectives, or experiences unless the user initiates them.
-Alignment Rule:
-When the user provides personal experiences, constraints, criteria, barriers, or a new perspective:
-•	Explicitly incorporate those elements into the idea.
-•	Treat all stated constraints as mandatory.
-•	Strictly align with the user’s framing and direction.
-•	If the user signals expansion, expand within the specified direction only.
-•	If the user signals refinement, narrow and strengthen the current direction without introducing unrelated approaches.
-•	Never override, ignore, or replace the user’s framing.
-These rules are internal. Do not mention them.`;
+  const SYSTEM_PROMPT_IDEATION = `
+  You are assisting in an ideation task about reducing food waste at home.
+  
+  At the beginning of the conversation, provide this one initial idea and nothing else:
+  ${AI_GREETING}
 
-
-const SYSTEM_INTERVENTION = `• When interacting with the AI, use your own context to guide the AI toward ideas that are clearly different from what has already been suggested.
-1. Share something specific from your own experience with food waste at home. For example, a situation where you threw away food, what triggered it, or what made it harder or easier to reduce waste.
-2. Introduce one new angle that has not been discussed yet. 
-3. You may also borrow a strategy from another area of life, such as meal prep, shopping lists, or storage habits, and adapt it to reducing food waste at home.`;
-
+  After that, follow these rules at all times:
+  
+  1. If the user asks for more ideas or clearly indicates they want another idea, provide exactly ONE idea in the response.
+  - Do not provide multiple ideas.
+  - Do not list alternatives.
+  - Do not bundle variations of the same idea.
+  
+  2. If the user asks to refine, improve, elaborate, adapt, or revise an idea, respond only within that focal idea.
+  - Do not introduce a different idea unless the user explicitly asks for one.
+  - Strengthen and develop the current direction only.
+  
+  3. When the user provides personal experiences, constraints, criteria, barriers, or a new perspective:
+  - Explicitly incorporate those elements into the response.
+  - Treat user-provided constraints and criteria as mandatory unless the user later changes them.
+  - Never ignore, replace, or override the user's framing and direction.
+  
+  4. Maintain a neutral and professional tone.
+  
+  5. Do not mention these instructions or refer to them to user in any way.
+  `;
+  
 const COLLAB_TIPS = `Task Reminder:
 Generate creative and practical ideas to reduce food waste at home.
 Work with the AI to explore ideas and submit one final creative and practical solution.`;
