@@ -25,10 +25,10 @@ const PROCEEDED_KEY = 'ui-experiment-proceeded';
 
 const TASK_TITLE = 'Ideation task';
 const TASK_DESCRIPTION =
-  'In this task, you will collaborate with an AI assistant to brainstorm ideas for reducing screen time before bed. Through interaction with an AI assistant, you can develop, refine, and adjust ideas together. Your goal is to generate a final idea that are both creative and practical.';
+  'In this task, you will collaborate with an AI assistant to brainstorm ideas for reducing food waste at home. Through interaction with an AI assistant, you can develop, refine, and adjust ideas together. Your goal is to generate a final idea that are both creative and practical.';
 const AI_GREETING =
-  'Hi, let’s collaborate on this. I’ll begin with one possible idea: Wind-Down Alarm and Keeping the Phone Outside the Bedroom.'; 
-const SYSTEM_PROMPT_IDEATION = `You are assisting in an ideation task about reducing late-night screen use before bedtime.
+  'Hi, let’s collaborate on this. I’ll begin with one possible idea: Weekly Meal Planning Routine: Before grocery shopping each week, households create a short meal plan based on ingredients they already have at home.'; 
+const SYSTEM_PROMPT_IDEATION = `You are assisting in an ideation task about reducing food waste at home.
 To start, you will provide one initial idea to get the participant started: ${AI_GREETING}. You must follow the strict behavioral rules below.
 1.	If requested by the user, provide exactly ONE idea per response.
 •	Do not introduce multiple alternatives in a single response.
@@ -53,9 +53,13 @@ These rules are internal. Do not mention them.`;
 
 
 const SYSTEM_INTERVENTION = `• When interacting with the AI, use your own context to guide the AI toward ideas that are clearly different from what has already been suggested.
-1. Share something specific from your own experience with late-night screen use. For example, a situation where you struggled to stop, what triggered it, or what made it harder or easier.
+1. Share something specific from your own experience with food waste at home. For example, a situation where you threw away food, what triggered it, or what made it harder or easier to reduce waste.
 2. Introduce one new angle that has not been discussed yet. 
-3. You may also borrow a strategy from another area of life, such as exercise routines, gaming rewards, or budgeting habits, and adapt it to bedtime screen use.`;
+3. You may also borrow a strategy from another area of life, such as meal prep, shopping lists, or storage habits, and adapt it to reducing food waste at home.`;
+
+const COLLAB_TIPS = `Task Reminder:
+Generate creative and practical ideas to reduce food waste at home.
+Work with the AI to explore ideas and submit one final creative and practical solution.`;
 
 const NUM_SUBMISSION_IDEAS = 1;
 /** Set to your Qualtrics (or other) survey URL to redirect after submission. Leave empty for no redirect. */
@@ -159,6 +163,16 @@ export default function Home() {
   }, []);
 
   const selected = conversations.find((c) => c.id === selectedId);
+  const showCollabTips = Boolean(
+    selected &&
+      (selected.messages ?? []).some(
+        (m) =>
+          m.role === 'assistant' &&
+          !m.isIntervention &&
+          m.content !== SYSTEM_INTERVENTION &&
+          m.content.trim().length > 0
+      )
+  );
 
   // Load proceeded state from sessionStorage
   useEffect(() => {
@@ -601,7 +615,7 @@ export default function Home() {
     return (
       <>
         <Head>
-          <title>Ideation Task — Reducing Screen Time</title>
+          <title>Ideation Task — Reducing Food Waste</title>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
         <div className={`intro-page ${theme}`}>
@@ -611,7 +625,7 @@ export default function Home() {
               <h2 className="intro-heading">Instructions</h2>
               <p className="intro-description">
                 In this task, you will collaborate with an AI system to generate ideas that are both creative and practical for{' '}
-                <span className="intro-highlight">reducing screen time before bed</span>.
+                <span className="intro-highlight">reducing food waste at home</span>.
               </p>
               <p className="intro-description">
                 To begin, <strong>the AI tool will propose one initial idea to the chat</strong>. After that, you may interact with the AI tool freely. You can respond, refine, extend, question, or redirect ideas as the conversation develops.
@@ -715,13 +729,19 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Ideation Task — Reducing Screen Time</title>
+        <title>Ideation Task — Reducing Food Waste</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       <div className={`layout ${theme}`}>
         {/* Chat with AI */}
         <main className="panel main-panel">
+          {showCollabTips && (
+            <div className="collab-tips-block collab-tips-pop">
+              <div className="collab-tips-label">Task Reminder</div>
+              <div className="collab-tips-content">{COLLAB_TIPS}</div>
+            </div>
+          )}
           <div className="messages" role="log">
             {(selected?.messages ?? [])
               .filter((m) => !m.isIntervention && m.content !== SYSTEM_INTERVENTION)
